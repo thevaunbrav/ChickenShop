@@ -1,0 +1,12 @@
+name: ChickenShop
+version: 1.0.0
+main: net.chickenshop.ChickenShop
+api-version: '1.21'
+depend: [Vault, PlayerPoints]
+commands:
+  shop:
+    description: Magazayi acar
+    usage: /shop
+permissions:
+  chickenshop.use:
+    default: true
