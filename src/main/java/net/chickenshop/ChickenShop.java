@@ -19,19 +19,21 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
     private record ShopHolder(UUID owner, int category) implements InventoryHolder {
         public Inventory getInventory() { return null; }
     }
-    private static final String[] NAMES = {"SUNUCU MAĞAZASI", "END", "NETHER", "ALETLER", "KRİSTALLER"};
-    private static final Material[] ICONS = {Material.GRASS_BLOCK, Material.END_STONE, Material.NETHERRACK, Material.DIAMOND_PICKAXE, Material.AMETHYST_SHARD};
+    private static final String[] NAMES = {"END", "NETHER", "PvP", "YEMEK", "KRİSTALLER"};
+    private static final Material[] ICONS = {Material.END_STONE, Material.NETHERRACK, Material.TOTEM_OF_UNDYING, Material.COOKED_BEEF, Material.AMETHYST_SHARD};
     private static final EntityType[] MOBS = {EntityType.PIG, EntityType.COW, EntityType.ZOMBIE, EntityType.SPIDER, EntityType.SKELETON, EntityType.CREEPER, EntityType.ZOMBIFIED_PIGLIN, EntityType.BLAZE, EntityType.IRON_GOLEM};
     private static final String[] MOB_NAMES = {"Domuz", "İnek", "Zombi", "Örümcek", "İskelet", "Creeper", "Zombileşmiş Piglin", "Blaze", "Demir Golem"};
     private static final Material[][] ITEMS = {
-        {Material.DIRT,Material.STONE,Material.OAK_LOG,Material.COBBLESTONE,Material.GLASS,Material.SAND,Material.OBSIDIAN},
-        {Material.END_STONE,Material.ENDER_PEARL,Material.CHORUS_FRUIT,Material.PURPUR_BLOCK,Material.END_ROD,Material.SHULKER_SHELL,Material.DRAGON_BREATH},
-        {Material.NETHERRACK,Material.SOUL_SAND,Material.QUARTZ,Material.GLOWSTONE,Material.BLAZE_ROD,Material.NETHER_WART,Material.ANCIENT_DEBRIS},
-        {Material.IRON_PICKAXE,Material.DIAMOND_PICKAXE,Material.NETHERITE_PICKAXE,Material.DIAMOND_AXE,Material.DIAMOND_SHOVEL,Material.SHEARS,Material.FISHING_ROD}
+        {Material.ENDER_CHEST,Material.ENDER_PEARL,Material.END_STONE,Material.DRAGON_BREATH,Material.END_ROD,Material.CHORUS_FRUIT,Material.POPPED_CHORUS_FRUIT,Material.SHULKER_SHELL,Material.SHULKER_BOX},
+        {Material.BLAZE_ROD,Material.NETHER_WART,Material.GLOWSTONE_DUST,Material.MAGMA_CREAM,Material.GHAST_TEAR,Material.QUARTZ,Material.SOUL_SAND,Material.MAGMA_BLOCK,Material.CRYING_OBSIDIAN},
+        {Material.OBSIDIAN,Material.END_CRYSTAL,Material.RESPAWN_ANCHOR,Material.GLOWSTONE,Material.TOTEM_OF_UNDYING,Material.ENDER_PEARL,Material.GOLDEN_APPLE,Material.EXPERIENCE_BOTTLE,Material.TRIDENT},
+        {Material.POTATO,Material.SWEET_BERRIES,Material.MELON_SLICE,Material.CARROT,Material.APPLE,Material.COOKED_CHICKEN,Material.COOKED_BEEF,Material.GOLDEN_CARROT,Material.GOLDEN_APPLE}
     };
     private static final double[][] PRICES = {
-        {10,20,50,15,30,15,200}, {15,100,30,60,150,1200,200},
-        {10,25,45,80,200,50,3000}, {250,1800,12000,1500,750,100,150}
+        {250,100,15,200,150,30,45,1200,1800},
+        {200,50,35,125,350,45,25,100,250},
+        {200,450,1200,80,3500,100,500,120,5000},
+        {20,15,15,15,20,35,40,75,500}
     };
     @Override public void onEnable() {
         saveDefaultConfig();
@@ -58,29 +60,27 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
         return item;
     }
     private void openHome(Player p) {
-        Inventory inv = Bukkit.createInventory(new ShopHolder(p.getUniqueId(), -1), 45, "§8ChickenShop §7• §eMağaza");
+        Inventory inv = Bukkit.createInventory(new ShopHolder(p.getUniqueId(), -1), 27, "SUNUCU MAĞAZASI");
         int[] slots = {11,12,13,14,15};
         for(int i=0;i<5;i++)
             inv.setItem(slots[i], button(ICONS[i], "§e§l"+NAMES[i], i==4 ? "§dPlayerPoints puanları" : "§6Dolar ile alışveriş", "§7Açmak için tıkla"));
         p.openInventory(inv);
     }
-    private int mobSlot(int i) { return 19+i; }
+    private int mobSlot(int i) { return 9+i; }
     private void openCategory(Player p, int c) {
-        Inventory inv = Bukkit.createInventory(new ShopHolder(p.getUniqueId(), c), 54, "§8ChickenShop §7• "+NAMES[c]);
+        Inventory inv = Bukkit.createInventory(new ShopHolder(p.getUniqueId(), c), 27, NAMES[c]);
         if(c==4) {
-            inv.setItem(4,button(Material.AMETHYST_SHARD,"§dPuan bakiyesi","§f"+getPoints(p)+" puan"));
             for(int i=0;i<MOBS.length;i++) {
                 int price = getConfig().getInt("spawners."+MOBS[i].name(), 100);
                 inv.setItem(mobSlot(i),button(Material.SPAWNER,"§d"+MOB_NAMES[i]+" Spawnerı","§7Fiyat: §d"+price+" puan","§eSatın almak için tıkla"));
             }
-            inv.setItem(49,button(Material.TRIPWIRE_HOOK,"§eKasa anahtarları","§7Kasalar hazır olunca eklenecek"));
         } else {
             for(int i=0;i<ITEMS[c].length;i++) {
                 Material m=ITEMS[c][i];
-                inv.setItem(19+i,button(m,"§f"+m.name().replace('_',' '),"§7Fiyat: §6$"+PRICES[c][i],"§eSatın almak için tıkla"));
+                inv.setItem(9+i,button(m,"§f"+m.name().replace('_',' '),"§7Fiyat: §6$"+PRICES[c][i],"§eSatın almak için tıkla"));
             }
         }
-        inv.setItem(53,button(Material.ARROW,"§eGeri"));
+        inv.setItem(18,button(Material.BARRIER,"§cGeri"));
         p.openInventory(inv);
     }
     private Object pointsApi() throws Exception {
@@ -124,10 +124,10 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
             for(int i=0;i<slots.length;i++) if(slot==slots[i]) { openCategory(p,i); return; }
             return;
         }
-        if(slot==53) { openHome(p); return; }
+        if(slot==18) { openHome(p); return; }
         int c=holder.category();
         if(c==4) {
-            int i=slot-19;
+            int i=slot-9;
             if(i<0 || i>=MOBS.length) return;
             int price=getConfig().getInt("spawners."+MOBS[i].name(),100);
             if(price<=0) {p.sendMessage("§cFiyat geçersiz.");return;}
@@ -138,7 +138,7 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
             give(p,spawner(i)); p.sendMessage("§a"+MOB_NAMES[i]+" Spawnerı satın alındı! §d-"+price+" puan");
             openCategory(p,c); return;
         }
-        int i=slot-19;
+        int i=slot-9;
         if(i<0 || i>=ITEMS[c].length) return;
         double price=PRICES[c][i];
         if(!economy.has(p,price)) {p.sendMessage("§cYeterli paran yok.");return;}
