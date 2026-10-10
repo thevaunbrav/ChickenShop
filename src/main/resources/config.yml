@@ -1,0 +1,11 @@
+# Fiyatlar başlangıç değerleridir.
+spawners:
+  PIG: 100
+  COW: 200
+  ZOMBIE: 300
+  SPIDER: 350
+  SKELETON: 450
+  CREEPER: 650
+  ZOMBIFIED_PIGLIN: 900
+  BLAZE: 1200
+  IRON_GOLEM: 2500
