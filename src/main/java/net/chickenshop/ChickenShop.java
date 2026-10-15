@@ -96,7 +96,7 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
         Material material = ITEMS[category][index];
         int maxStack = Math.max(1, material.getMaxStackSize());
         int step = maxStack >= 64 ? 64 : maxStack >= 16 ? 16 : 1;
-        int amount = Math.max(1, Math.min(2304, quantity));
+        int amount = Math.max(1, Math.min(maxStack, quantity));
         selections.put(p.getUniqueId(), new Selection(category, index, amount));
         Inventory inv = Bukkit.createInventory(new ShopHolder(p.getUniqueId(), -2), 27, "Miktar Seç • " + ITEM_NAMES[category][index]);
         inv.setItem(9, button(Material.RED_STAINED_GLASS_PANE, "§c-"+step));
@@ -117,7 +117,8 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
     }
     private void refreshQuantity(Player p, Selection selection, int quantity) {
         // Yeniden açmak yerine mevcut envanteri güncelle: spam alışverişte ekran kapanmaz.
-        int amount = Math.max(1, Math.min(2304, quantity));
+        int maxStack = Math.max(1, ITEMS[selection.category()][selection.index()].getMaxStackSize());
+        int amount = Math.max(1, Math.min(maxStack, quantity));
         selections.put(p.getUniqueId(), new Selection(selection.category(), selection.index(), amount));
         Material material = ITEMS[selection.category()][selection.index()];
         ItemStack display = button(material, "§e"+ITEM_NAMES[selection.category()][selection.index()],
