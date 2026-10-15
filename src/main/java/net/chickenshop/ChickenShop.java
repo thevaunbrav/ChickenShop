@@ -83,7 +83,7 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
         } else {
             for(int i=0;i<ITEMS[c].length;i++) {
                 Material m=ITEMS[c][i];
-                inv.setItem(9+i,button(m,"§f"+m.name().replace('_',' '),"§7Fiyat: §6$"+PRICES[c][i],"§eSatın almak için tıkla"));
+                inv.setItem(9+i,button(m,"§f"+ITEM_NAMES[c][i],"§7Fiyat: §6$"+PRICES[c][i],"§eSatın almak için tıkla"));
             }
         }
         inv.setItem(18,button(Material.BARRIER,"§cGeri"));
