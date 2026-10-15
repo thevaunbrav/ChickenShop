@@ -8,6 +8,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.*;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.*;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -16,6 +17,8 @@ import java.util.*;
 
 public final class ChickenShop extends JavaPlugin implements Listener, CommandExecutor {
     private Economy economy;
+    private final Map<UUID, Selection> selections = new HashMap<>();
+    private record Selection(int category, int index, int quantity) {}
     private record ShopHolder(UUID owner, int category) implements InventoryHolder {
         public Inventory getInventory() { return null; }
     }
@@ -89,6 +92,56 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
         inv.setItem(18,button(Material.BARRIER,"§cGeri"));
         p.openInventory(inv);
     }
+    private void openQuantity(Player p, int category, int index, int quantity) {
+        Material material = ITEMS[category][index];
+        int maxStack = Math.max(1, material.getMaxStackSize());
+        int step = maxStack >= 64 ? 64 : maxStack >= 16 ? 16 : 1;
+        int amount = Math.max(1, Math.min(2304, quantity));
+        selections.put(p.getUniqueId(), new Selection(category, index, amount));
+        Inventory inv = Bukkit.createInventory(new ShopHolder(p.getUniqueId(), -2), 27, "Miktar Seç • " + ITEM_NAMES[category][index]);
+        inv.setItem(9, button(Material.RED_STAINED_GLASS_PANE, "§c-"+step));
+        inv.setItem(10, button(Material.RED_STAINED_GLASS_PANE, "§c-10"));
+        inv.setItem(11, button(Material.RED_STAINED_GLASS_PANE, "§c-1"));
+        ItemStack display = button(material, "§e"+ITEM_NAMES[category][index],
+                "§7Miktar: §f"+amount,
+                "§7Birim fiyat: §6$"+PRICES[category][index],
+                "§7Toplam: §6$"+String.format(java.util.Locale.US, "%.2f", PRICES[category][index]*amount));
+        display.setAmount(Math.min(amount, maxStack));
+        inv.setItem(13, display);
+        inv.setItem(15, button(Material.LIME_STAINED_GLASS_PANE, "§a+1"));
+        inv.setItem(16, button(Material.LIME_STAINED_GLASS_PANE, "§a+10"));
+        inv.setItem(17, button(Material.LIME_STAINED_GLASS_PANE, "§a+"+step));
+        inv.setItem(21, button(Material.LIME_CONCRETE, "§a§lSatın Al", "§7Menü açık kalır"));
+        inv.setItem(23, button(Material.BARRIER, "§c§lİptal", "§7Kategoriye dön"));
+        p.openInventory(inv);
+    }
+    private void refreshQuantity(Player p, Selection selection, int quantity) {
+        // Yeniden açmak yerine mevcut envanteri güncelle: spam alışverişte ekran kapanmaz.
+        int amount = Math.max(1, Math.min(2304, quantity));
+        selections.put(p.getUniqueId(), new Selection(selection.category(), selection.index(), amount));
+        Material material = ITEMS[selection.category()][selection.index()];
+        ItemStack display = button(material, "§e"+ITEM_NAMES[selection.category()][selection.index()],
+                "§7Miktar: §f"+amount,
+                "§7Birim fiyat: §6$"+PRICES[selection.category()][selection.index()],
+                "§7Toplam: §6$"+String.format(java.util.Locale.US, "%.2f", PRICES[selection.category()][selection.index()]*amount));
+        display.setAmount(Math.min(amount, Math.max(1, material.getMaxStackSize())));
+        p.getOpenInventory().getTopInventory().setItem(13, display);
+    }
+    private void buySelected(Player p, Selection selection) {
+        Material material = ITEMS[selection.category()][selection.index()];
+        int quantity = selection.quantity();
+        double price = PRICES[selection.category()][selection.index()] * quantity;
+        if(!Double.isFinite(price) || price<=0) {p.sendMessage("§cGeçersiz fiyat."); return;}
+        if(!economy.has(p, price)) {p.sendMessage("§cYeterli paran yok. Gerekli: $"+price);return;}
+        if(!economy.withdrawPlayer(p, price).transactionSuccess()) {p.sendMessage("§cÖdeme başarısız.");return;}
+        int maxStack = Math.max(1, material.getMaxStackSize());
+        for(int left=quantity;left>0;) {
+            int take=Math.min(maxStack,left);
+            give(p,new ItemStack(material,take));
+            left-=take;
+        }
+        p.sendMessage("§a"+quantity+"x "+ITEM_NAMES[selection.category()][selection.index()]+" satın alındı! §6-$"+String.format(java.util.Locale.US,"%.2f",price));
+    }
     private Object pointsApi() throws Exception {
         Object plugin = Bukkit.getPluginManager().getPlugin("PlayerPoints");
         return plugin.getClass().getMethod("getAPI").invoke(plugin);
@@ -119,6 +172,13 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
     private void give(Player p,ItemStack item) {
         p.getInventory().addItem(item).values().forEach(left -> p.getWorld().dropItemNaturally(p.getLocation(),left));
     }
+    @EventHandler public void close(InventoryCloseEvent event) {
+        if(event.getInventory().getHolder() instanceof ShopHolder holder && holder.category()==-2)
+            Bukkit.getScheduler().runTask(this, () -> {
+                if(!(event.getPlayer().getOpenInventory().getTopInventory().getHolder() instanceof ShopHolder h) || h.category()!=-2)
+                    selections.remove(event.getPlayer().getUniqueId());
+            });
+    }
     @EventHandler public void click(InventoryClickEvent event) {
         if(!(event.getView().getTopInventory().getHolder() instanceof ShopHolder holder)) return;
         event.setCancelled(true);
@@ -128,6 +188,26 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
         if(holder.category()==-1) {
             int[] slots={11,12,13,14,15};
             for(int i=0;i<slots.length;i++) if(slot==slots[i]) { openCategory(p,i); return; }
+            return;
+        }
+        if(holder.category()==-2) {
+            Selection selected=selections.get(p.getUniqueId());
+            if(selected==null) {openHome(p);return;}
+            Material material=ITEMS[selected.category()][selected.index()];
+            int maxStack=Math.max(1,material.getMaxStackSize());
+            int step=maxStack>=64?64:maxStack>=16?16:1;
+            if(slot==23) {selections.remove(p.getUniqueId());openCategory(p,selected.category());return;}
+            if(slot==21) {buySelected(p,selected);return;}
+            int delta=switch(slot) {
+                case 9 -> -step;
+                case 10 -> -10;
+                case 11 -> -1;
+                case 15 -> 1;
+                case 16 -> 10;
+                case 17 -> step;
+                default -> 0;
+            };
+            if(delta!=0) refreshQuantity(p,selected,selected.quantity()+delta);
             return;
         }
         if(slot==18) { openHome(p); return; }
@@ -146,10 +226,6 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
         }
         int i=slot-9;
         if(i<0 || i>=ITEMS[c].length) return;
-        double price=PRICES[c][i];
-        if(!economy.has(p,price)) {p.sendMessage("§cYeterli paran yok.");return;}
-        if(!economy.withdrawPlayer(p,price).transactionSuccess()) {p.sendMessage("§cÖdeme başarısız.");return;}
-        give(p,new ItemStack(ITEMS[c][i]));
-        p.sendMessage("§aSatın alındı! §6-$"+price);
+        openQuantity(p,c,i,1);
     }
 }
