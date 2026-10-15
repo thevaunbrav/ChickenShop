@@ -29,6 +29,12 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
         {Material.OBSIDIAN,Material.END_CRYSTAL,Material.RESPAWN_ANCHOR,Material.GLOWSTONE,Material.TOTEM_OF_UNDYING,Material.ENDER_PEARL,Material.GOLDEN_APPLE,Material.EXPERIENCE_BOTTLE,Material.TRIDENT},
         {Material.POTATO,Material.SWEET_BERRIES,Material.MELON_SLICE,Material.CARROT,Material.APPLE,Material.COOKED_CHICKEN,Material.COOKED_BEEF,Material.GOLDEN_CARROT,Material.GOLDEN_APPLE}
     };
+    private static final String[][] ITEM_NAMES = {
+        {"Ender Sandığı","Ender İncisi","End Taşı","Ejderha Nefesi","End Çubuğu","Koro Meyvesi","Patlamış Koro Meyvesi","Shulker Kabuğu","Shulker Kutusu"},
+        {"Blaze Çubuğu","Nether Yumrusu","Işık Taşı Tozu","Magma Kremi","Ghast Gözyaşı","Nether Kuvarsı","Ruh Kumu","Magma Bloğu","Ağlayan Obsidyen"},
+        {"Obsidyen","End Kristali","Yeniden Doğma Çapası","Işık Taşı","Ölümsüzlük Totemi","Ender İncisi","Altın Elma","Deneyim Şişesi","Üç Dişli Mızrak"},
+        {"Patates","Tatlı Meyveler","Karpuz Dilimi","Havuç","Elma","Pişmiş Tavuk","Pişmiş Biftek","Altın Havuç","Altın Elma"}
+    };
     private static final double[][] PRICES = {
         {250,100,15,200,150,30,45,1200,1800},
         {200,50,35,125,350,45,25,100,250},
