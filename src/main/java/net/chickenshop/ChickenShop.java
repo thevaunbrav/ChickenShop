@@ -169,6 +169,7 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
             meta.setBlockState(cs);
         }
         meta.setDisplayName("§d"+MOB_NAMES[i]+" Spawnerı");
+        if(i==8) meta.setLore(Arrays.asList("§c§lDİKKAT: §cDemir Golem XP vermez!", "§7XP: §8Bu özellik bu spawner için kullanılamaz."));
         item.setItemMeta(meta);
         return item;
     }
