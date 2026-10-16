@@ -81,7 +81,9 @@ public final class ChickenShop extends JavaPlugin implements Listener, CommandEx
         if(c==4) {
             for(int i=0;i<MOBS.length;i++) {
                 int price = getConfig().getInt("spawners."+MOBS[i].name(), 100);
-                inv.setItem(mobSlot(i),button(Material.SPAWNER,"§d"+MOB_NAMES[i]+" Spawnerı","§7Fiyat: §d"+price+" puan","§eSatın almak için tıkla"));
+                inv.setItem(mobSlot(i), i==8
+                    ? button(Material.SPAWNER,"§d"+MOB_NAMES[i]+" Spawnerı","§7Fiyat: §d"+price+" puan","§c§lDİKKAT: §cDemir Golem XP vermez!","§eSatın almak için tıkla")
+                    : button(Material.SPAWNER,"§d"+MOB_NAMES[i]+" Spawnerı","§7Fiyat: §d"+price+" puan","§eSatın almak için tıkla"));
             }
         } else {
             for(int i=0;i<ITEMS[c].length;i++) {
